@@ -11,6 +11,43 @@ import ticketCommentsHandler from "./tickets/[id]/comments.js";
 
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+function resolveAllowedOrigin(requestOrigin) {
+  if (allowedOrigins.length === 0) {
+    return "*";
+  }
+
+  if (!requestOrigin) {
+    return allowedOrigins[0];
+  }
+
+  return allowedOrigins.includes(requestOrigin) ? requestOrigin : null;
+}
+
+app.use((req, res, next) => {
+  const requestOrigin = req.headers.origin;
+  const allowedOrigin = resolveAllowedOrigin(requestOrigin);
+
+  if (allowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    res.setHeader("Vary", "Origin");
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -56,6 +93,10 @@ app.get("/api/tickets/:id", withParams(ticketsByIdHandler, { idParam: "id" }));
 app.put("/api/tickets/:id", withParams(ticketsByIdHandler, { idParam: "id" }));
 app.delete("/api/tickets/:id", withParams(ticketsByIdHandler, { idParam: "id" }));
 app.post("/api/tickets/:id/comments", withParams(ticketCommentsHandler, { idParam: "id" }));
+
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 app.all(/^\/api\/.*/, (_req, res) => {
   res.status(404).json({ message: "API route not found" });
