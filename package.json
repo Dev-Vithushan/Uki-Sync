@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "node --env-file=.env.local api/devServer.js",
+    "dev:frontend": "vite",
     "start:api": "node api/devServer.js",
+    "start:frontend": "node frontendServer.js",
+    "build:frontend": "vite build",
     "build": "vite build",
     "preview": "vite preview",
     "dev:vercel": "vercel dev"
